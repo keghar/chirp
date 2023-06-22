@@ -14,7 +14,6 @@ const CreatePostWizard = () => {
   const { user } = useUser();
 
   if (!user) return null;
-  console.log(user);
 
   return (
     <div className="flex w-full gap-3">
@@ -50,7 +49,10 @@ const PostView = (props: PostWithUser) => {
       />
       <div className="flex flex-col">
         <div className="flex gap-2 text-slate-300">
-          <span className="">{`@${author.username}`}</span>
+          <span className="">
+            <span>@</span>
+            {author.username}
+          </span>
           <span className="font-thin">{`· ${dayjs(
             post.createdAt
           ).fromNow()}`}</span>
