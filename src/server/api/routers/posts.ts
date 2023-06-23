@@ -8,10 +8,23 @@ import { createTRPCRouter, privateProcedure, publicProcedure } from "~/server/ap
 
 const filterUserForClient = (user: User) => {
 
-  return {id: user.id, username:user.username, profilePicture:user.profileImageUrl}
+  return {id: user.id, username:user.username, profilePicture:user.profileImageUrl
+  }
   
   
 }
+
+import { Ratelimit } from "@upstash/ratelimit"; // for deno: see above
+import { Redis } from "@upstash/redis";
+
+// Create a new ratelimiter, that allows 10 requests per 10 seconds
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "10 s"),
+  analytics: true,
+
+});
+
 
 export const postsRouter = createTRPCRouter({
   
@@ -54,6 +67,11 @@ create: privateProcedure.input(z.object({
 })).mutation(async ({ctx, input}) => {
 
 const authorId = ctx.userId
+const {success} = await ratelimit.limit(authorId)
+
+if (!success) throw new TRPCError({
+  code: "TOO_MANY_REQUESTS"
+})
 
 const post = await ctx.prisma.post.create({
   data:{
